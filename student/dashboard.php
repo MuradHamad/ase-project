@@ -163,11 +163,7 @@ include '../includes/header.php';
                                 <?php echo $reports_status['stage1'] ? formatDate($reports_status['stage1']['submitted_at']) : '—'; ?>
                             </td>
                             <td>
-                                <?php if ($reports_status['stage1']): ?>
-                                    <a href="view_report.php?type=stage1&id=<?php echo $reports_status['stage1']['report_id']; ?>" class="btn btn-sm btn-primary">View</a>
-                                <?php else: ?>
-                                    <a href="stage1_form.php" class="btn btn-sm btn-primary">Submit</a>
-                                <?php endif; ?>
+                                <a href="stage1_form.php" class="btn btn-sm btn-primary"><?php echo $reports_status['stage1'] ? 'Edit' : 'Submit'; ?></a>
                             </td>
                         </tr>
                         <tr>
@@ -206,11 +202,7 @@ include '../includes/header.php';
                                 <?php echo $reports_status['final'] ? formatDate($reports_status['final']['submitted_at']) : '—'; ?>
                             </td>
                             <td>
-                                <?php if ($reports_status['final']): ?>
-                                    <a href="view_report.php?type=final&id=<?php echo $reports_status['final']['report_id']; ?>" class="btn btn-sm btn-primary">View</a>
-                                <?php else: ?>
-                                    <a href="final_report.php" class="btn btn-sm btn-primary">Submit</a>
-                                <?php endif; ?>
+                                <a href="final_report.php" class="btn btn-sm btn-primary"><?php echo $reports_status['final'] ? 'Edit' : 'Submit'; ?></a>
                             </td>
                         </tr>
                     </tbody>
@@ -268,4 +260,5 @@ include '../includes/header.php';
 <?php endif; ?>
 
 <?php include '../includes/footer.php'; ?>
+
 

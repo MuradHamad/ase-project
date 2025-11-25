@@ -68,8 +68,63 @@ include '../includes/header.php';
         </div>
     </div>
 </div>
-
 <div class="card">
+        <?php
+        // Fetch pending stage1 reports for this supervisor (submitted but not graded)
+        $pending_stage1 = fetchAll(
+            "SELECT sr.report_id, sr.assignment_id, u.full_name AS student_name, s.student_number, c.company_name, sr.submitted_at
+             FROM stage1_reports sr
+             JOIN training_assignments ta ON sr.assignment_id = ta.assignment_id
+             JOIN students s ON ta.student_id = s.student_id
+             JOIN users u ON s.student_id = u.user_id
+             JOIN companies c ON ta.company_id = c.company_id
+             WHERE ta.academic_supervisor_id = ? AND sr.status = 'submitted' 
+             AND NOT EXISTS (SELECT 1 FROM stage1_grades g WHERE g.report_id = sr.report_id)
+             ORDER BY sr.submitted_at ASC",
+            [$supervisor_id]
+        );
+        ?>
+
+        <?php if (!empty($pending_stage1)): ?>
+            <div class="card">
+                <div class="card-header">
+                    <h2>Pending Stage 1 Reports</h2>
+                </div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Student ID</th>
+                                    <th>Company</th>
+                                    <th>Submitted At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($pending_stage1 as $ps): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($ps['student_name']); ?></td>
+                                        <td><?php echo htmlspecialchars($ps['student_number']); ?></td>
+                                        <td><?php echo htmlspecialchars($ps['company_name']); ?></td>
+                                        <td><?php echo formatDate($ps['submitted_at']); ?></td>
+                                        <td>
+                                            <a class="btn btn-sm btn-primary" href="grade.php?assignment_id=<?php echo $ps['assignment_id']; ?>">Grade</a>
+                                            <a class="btn btn-sm btn-secondary" href="view_student.php?assignment_id=<?php echo $ps['assignment_id']; ?>">View</a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+
+
+
+        <div class="card">
     <div class="card-header">
         <h2>My Students</h2>
     </div>
@@ -120,4 +175,5 @@ include '../includes/header.php';
 </div>
 
 <?php include '../includes/footer.php'; ?>
+
 

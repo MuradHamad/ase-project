@@ -40,7 +40,6 @@ $current_user_type = getCurrentUserType();
                     </li>
                     <?php if ($current_user_type === 'student'): ?>
                         <li><a href="<?php echo BASE_URL; ?>/student/companies.php">Companies</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/student/reports.php">My Reports</a></li>
                     <?php elseif ($current_user_type === 'supervisor'): ?>
                         <li><a href="<?php echo BASE_URL; ?>/supervisor/students.php">My Students</a></li>
                         <li><a href="<?php echo BASE_URL; ?>/supervisor/grading.php">Grading</a></li>
@@ -78,4 +77,5 @@ $current_user_type = getCurrentUserType();
     <?php endif; ?>
     
     <main class="main-content">
+
 
