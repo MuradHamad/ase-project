@@ -16,10 +16,11 @@ if ($assignment_id <= 0) {
 
 $supervisor_id = $_SESSION['supervisor_id'];
 
-// Get assignment and verify this supervisor supervises it
+// Fetch assignment and validate supervisor
 $assignment = fetchOne(
-    "SELECT ta.*, s.student_id, u.full_name as student_name, s.student_number,
-     c.company_name, ac.supervisor_id FROM training_assignments ta
+    "SELECT ta.*, s.student_id, u.full_name AS student_name, s.student_number,
+            c.company_name, ac.supervisor_id 
+     FROM training_assignments ta
      JOIN students s ON ta.student_id = s.student_id
      JOIN users u ON s.student_id = u.user_id
      JOIN companies c ON ta.company_id = c.company_id
@@ -34,9 +35,12 @@ if (!$assignment || $assignment['supervisor_id'] != $supervisor_id) {
     exit();
 }
 
-// Get reports
+// Fetch reports
 $stage1 = fetchOne("SELECT * FROM stage1_reports WHERE assignment_id = ?", [$assignment_id]);
-$weekly_count = fetchOne("SELECT COUNT(*) as cnt FROM weekly_followups WHERE assignment_id = ?", [$assignment_id]);
+$weekly_followups = fetchAll(
+    "SELECT * FROM weekly_followups WHERE assignment_id = ? ORDER BY week_number ASC",
+    [$assignment_id]
+);
 $final = fetchOne("SELECT * FROM final_reports WHERE assignment_id = ?", [$assignment_id]);
 
 include '../includes/header.php';
@@ -45,26 +49,26 @@ include '../includes/header.php';
 <section class="container">
     <h2>Student Assignment View</h2>
 
-    <div class="card">
+    <div class="card mb-3">
         <div class="card-header">
             <h3><?php echo htmlspecialchars($assignment['student_name']); ?></h3>
             <p>Student ID: <?php echo htmlspecialchars($assignment['student_number']); ?></p>
         </div>
         <div class="card-body">
-            <div class="form-row">
-                <div class="form-group">
+            <div class="row">
+                <div class="col-md-3 mb-2">
                     <label>Company</label>
                     <p><?php echo htmlspecialchars($assignment['company_name']); ?></p>
                 </div>
-                <div class="form-group">
+                <div class="col-md-3 mb-2">
                     <label>Training Start</label>
                     <p><?php echo formatDate($assignment['training_start_date']); ?></p>
                 </div>
-                <div class="form-group">
+                <div class="col-md-3 mb-2">
                     <label>Training End</label>
                     <p><?php echo formatDate($assignment['training_end_date']); ?></p>
                 </div>
-                <div class="form-group">
+                <div class="col-md-3 mb-2">
                     <label>Status</label>
                     <p><?php echo htmlspecialchars($assignment['status']); ?></p>
                 </div>
@@ -72,44 +76,73 @@ include '../includes/header.php';
         </div>
     </div>
 
-    <h3 style="margin-top: 20px;">Reports Status</h3>
+    <h3>Reports Status</h3>
 
-    <div class="card">
+    <!-- Stage 1 Report -->
+    <div class="card mb-3">
         <div class="card-body">
             <h4>Stage 1 Report</h4>
             <?php if ($stage1): ?>
                 <p>Submitted: <?php echo formatDate($stage1['submitted_at']); ?></p>
                 <p>Status: <strong><?php echo htmlspecialchars($stage1['status']); ?></strong></p>
-                <a href="grade.php?assignment_id=<?php echo $assignment_id; ?>&type=stage1" class="btn btn-sm btn-primary">Grade</a>
+                <p>Grade: <strong><?php echo htmlspecialchars($stage1['supervisor_grade'] ?? '-'); ?></strong></p>
+                <a href="view_stage1.php?assignment_id=<?php echo $assignment_id; ?>" class="btn btn-sm btn-primary">View</a>
             <?php else: ?>
                 <p>Not submitted yet</p>
             <?php endif; ?>
         </div>
     </div>
 
-    <div class="card" style="margin-top: 15px;">
+    <!-- Weekly Reports -->
+    <div class="card mb-3">
         <div class="card-body">
-            <h4>Weekly Follow-ups</h4>
-            <p>Submitted: <strong><?php echo $weekly_count['cnt']; ?> weeks</strong></p>
+            <h4>Weekly Follow-Ups</h4>
+
+            <?php if (empty($weekly_followups)): ?>
+                <p>No weekly follow-ups submitted yet.</p>
+            <?php else: ?>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Week</th>
+                            <th>Submitted At</th>
+                            <th>Grade</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($weekly_followups as $wf): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($wf['week_number']); ?></td>
+                                <td><?php echo formatDate($wf['submitted_at']); ?></td>
+                                <td><?php echo htmlspecialchars($wf['supervisor_grade'] ?? '-'); ?></td>
+                                <td>
+                                    <a href="view_week.php?followup_id=<?php echo $wf['followup_id']; ?>" class="btn btn-sm btn-primary">View</a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
         </div>
     </div>
 
-    <div class="card" style="margin-top: 15px;">
+    <!-- Final Report -->
+    <div class="card mb-3">
         <div class="card-body">
             <h4>Final Report</h4>
             <?php if ($final): ?>
                 <p>Submitted: <?php echo formatDate($final['submitted_at']); ?></p>
                 <p>Status: <strong><?php echo htmlspecialchars($final['status']); ?></strong></p>
-                <a href="grade.php?assignment_id=<?php echo $assignment_id; ?>&type=final" class="btn btn-sm btn-primary">Grade</a>
+                <p>Grade: <strong><?php echo htmlspecialchars($final['supervisor_grade'] ?? '-'); ?></strong></p>
+                <a href="view_final.php?assignment_id=<?php echo $assignment_id; ?>" class="btn btn-sm btn-primary">View</a>
             <?php else: ?>
                 <p>Not submitted yet</p>
             <?php endif; ?>
         </div>
     </div>
 
-    <p style="margin-top: 20px;">
-        <a class="btn btn-secondary" href="dashboard.php">Back to Dashboard</a>
-    </p>
+    <a class="btn btn-secondary mt-3" href="dashboard.php">Back to Dashboard</a>
 </section>
 
 <?php include '../includes/footer.php'; ?>

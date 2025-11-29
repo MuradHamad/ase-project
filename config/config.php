@@ -14,7 +14,7 @@ if (session_status() === PHP_SESSION_NONE) {
 date_default_timezone_set('Asia/Amman');
 
 // Base URL (adjust if needed)
-define('BASE_URL', 'http://localhost/ase project');
+define('BASE_URL', 'http://localhost/ase-project');
 
 // Site Configuration
 define('SITE_NAME', 'Field Training Management System');

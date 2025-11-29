@@ -80,6 +80,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_weekly'])) {
     if (empty($tasks_data)) {
         $error = 'Please add at least one task';
     } else {
+        // Prepare variables for bind_param
+        $company_signed = isset($_POST['company_supervisor_signed']) ? 1 : 0;
+        $company_signed_date = !empty($_POST['company_supervisor_signed_date']) ? $_POST['company_supervisor_signed_date'] : null;
+        $academic_signed = isset($_POST['academic_supervisor_signed']) ? 1 : 0;
+        $academic_signed_date = !empty($_POST['academic_supervisor_signed_date']) ? $_POST['academic_supervisor_signed_date'] : null;
+        
         // Insert weekly follow-up
         $sql = "INSERT INTO weekly_followups 
                 (assignment_id, week_start_date, week_end_date, week_number,
@@ -90,45 +96,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_weekly'])) {
         $followup_id = false;
         $conn = getDBConnection();
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param('ississss',
-            $assignment['assignment_id'],
-            $week_start,
-            $week_end,
-            $next_week,
-            isset($_POST['company_supervisor_signed']) ? 1 : 0,
-            !empty($_POST['company_supervisor_signed_date']) ? $_POST['company_supervisor_signed_date'] : null,
-            isset($_POST['academic_supervisor_signed']) ? 1 : 0,
-            !empty($_POST['academic_supervisor_signed_date']) ? $_POST['academic_supervisor_signed_date'] : null
-        );
-        
-        if ($stmt->execute()) {
-            $followup_id = $conn->insert_id;
-            
-            // Insert tasks
-            $task_sql = "INSERT INTO weekly_tasks (followup_id, tasks_duties, notes, gained_skills, task_order) 
-                        VALUES (?, ?, ?, ?, ?)";
-            $task_stmt = $conn->prepare($task_sql);
-            
-            foreach ($tasks_data as $index => $task) {
-                $order = $index + 1;
-                $task_stmt->bind_param('isssi',
-                    $followup_id,
-                    $task['tasks_duties'],
-                    $task['notes'],
-                    $task['gained_skills'],
-                    $order
-                );
-                $task_stmt->execute();
-            }
-            $task_stmt->close();
-            
-            setFlashMessage('Weekly follow-up submitted successfully!', 'success');
-            header('Location: dashboard.php');
-            exit();
+        if ($stmt === false) {
+            $error = 'Database error: ' . $conn->error;
         } else {
-            $error = 'Error submitting weekly follow-up. Please try again.';
+            $stmt->bind_param(
+                'ississss',
+                $assignment['assignment_id'],
+                $week_start,
+                $week_end,
+                $next_week,
+                $company_signed,
+                $company_signed_date,
+                $academic_signed,
+                $academic_signed_date
+            );
+            
+            if ($stmt->execute()) {
+                $followup_id = $conn->insert_id;
+                
+                // Insert tasks
+                $task_sql = "INSERT INTO weekly_tasks (followup_id, tasks_duties, notes, gained_skills, task_order) 
+                            VALUES (?, ?, ?, ?, ?)";
+                $task_stmt = $conn->prepare($task_sql);
+                
+                foreach ($tasks_data as $index => $task) {
+                    $order = $index + 1;
+                    $task_stmt->bind_param('isssi',
+                        $followup_id,
+                        $task['tasks_duties'],
+                        $task['notes'],
+                        $task['gained_skills'],
+                        $order
+                    );
+                    $task_stmt->execute();
+                }
+                $task_stmt->close();
+                
+                setFlashMessage('Weekly follow-up submitted successfully!', 'success');
+                header('Location: dashboard.php');
+                exit();
+            } else {
+                $error = 'Error submitting weekly follow-up. Please try again.';
+            }
+            $stmt->close();
         }
-        $stmt->close();
     }
 }
 
@@ -242,5 +253,3 @@ function addTaskRow() {
 </script>
 
 <?php include '../includes/footer.php'; ?>
-
-
