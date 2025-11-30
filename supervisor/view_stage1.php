@@ -44,20 +44,13 @@ if (!$report) {
     exit();
 }
 
-// Handle grading submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['grade_stage1'])) {
-    $grade = intval($_POST['grade'] ?? 0);
-    $comments = sanitizeInput($_POST['comments'] ?? '');
-
-    $sql = "UPDATE stage1_reports SET supervisor_grade = ?, supervisor_comments = ?, status = 'graded' WHERE report_id = ?";
-    $result = executeUpdate($sql, [$grade, $comments, $report['report_id']]);
-
-    if ($result !== false) {
-        setFlashMessage('Stage 1 report graded successfully!', 'success');
-        header('Location: view_student.php?assignment_id=' . $assignment_id);
-        exit();
-    } else {
-        setFlashMessage('Error saving grade. Please try again.', 'error');
+// Determine company supervisor signature status
+$company_signed_text = 'Pending Review';
+if (isset($report['company_supervisor_signed'])) {
+    if ($report['company_supervisor_signed'] == 1) {
+        $company_signed_text = 'Approved';
+    } elseif ($report['company_supervisor_signed'] == 0) {
+        $company_signed_text = 'Not Signed';
     }
 }
 
@@ -84,8 +77,18 @@ include '../includes/header.php';
 
             <!-- Company Supervisor Signature -->
             <h4>Company Supervisor Signature</h4>
-            <p><strong>Name:</strong> <?php echo htmlspecialchars($report['company_supervisor_signature']); ?></p>
-            <p><strong>Date:</strong> <?php echo formatDate($report['company_supervisor_signed_date']); ?></p>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Status:</label>
+                    <input type="text" value="<?php echo htmlspecialchars($company_signed_text); ?>" disabled>
+                </div>
+                <?php if (!empty($report['company_supervisor_signed_date'])): ?>
+                    <div class="form-group">
+                        <label>Signed On:</label>
+                        <input type="text" value="<?php echo formatDate($report['company_supervisor_signed_date']); ?>" disabled>
+                    </div>
+                <?php endif; ?>
+            </div>
 
             <!-- Grading Form -->
             <h4>Supervisor Grading</h4>

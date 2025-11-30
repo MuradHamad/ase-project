@@ -43,6 +43,16 @@ $tasks = fetchAll(
     [$followup_id]
 );
 
+// Determine company supervisor signature status
+$company_signed_text = 'Pending';
+if (isset($weekly['company_supervisor_signed'])) {
+    if ($weekly['company_supervisor_signed'] == 1) {
+        $company_signed_text = 'Approved';
+    } elseif ($weekly['company_supervisor_signed'] == 0) {
+        $company_signed_text = 'Not Signed';
+    }
+}
+
 $error = '';
 $success = '';
 
@@ -130,6 +140,27 @@ include '../includes/header.php';
             <?php else: ?>
                 <p>No tasks found for this week.</p>
             <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Company Supervisor Signature -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <h3>Company Supervisor Signature</h3>
+        </div>
+        <div class="card-body">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Status:</label>
+                    <input type="text" value="<?php echo htmlspecialchars($company_signed_text); ?>" disabled class="form-control">
+                </div>
+                <?php if (!empty($weekly['company_supervisor_signed_date'])): ?>
+                    <div class="form-group">
+                        <label>Signed On:</label>
+                        <input type="text" value="<?php echo formatDate($weekly['company_supervisor_signed_date']); ?>" disabled class="form-control">
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
 

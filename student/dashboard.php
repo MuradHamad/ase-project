@@ -25,48 +25,38 @@ $sql = "SELECT ta.*, c.company_name, c.email as company_email, c.phone as compan
         LIMIT 1";
 $current_assignment = fetchOne($sql, [$student_id]);
 
-// Get student's reports status
+// Initialize reports status
 $reports_status = [
     'stage1' => null,
     'weekly' => [],
     'final' => null,
     'company_eval' => null
 ];
+$total_marks = null;
 
+// Fetch reports and marks only if assignment exists
 if ($current_assignment) {
+    $assignment_id = $current_assignment['assignment_id'];
+
     // Stage 1 Report
-    $stage1 = fetchOne(
-        "SELECT * FROM stage1_reports WHERE assignment_id = ?",
-        [$current_assignment['assignment_id']]
-    );
-    $reports_status['stage1'] = $stage1;
-    
+    $stage1 = fetchOne("SELECT * FROM stage1_reports WHERE assignment_id = ?", [$assignment_id]);
+    $reports_status['stage1'] = $stage1 ?: null;
+
     // Weekly Follow-ups
-    $weekly = fetchAll(
-        "SELECT * FROM weekly_followups WHERE assignment_id = ? ORDER BY week_number ASC",
-        [$current_assignment['assignment_id']]
-    );
-    $reports_status['weekly'] = $weekly;
-    
+    $weekly = fetchAll("SELECT * FROM weekly_followups WHERE assignment_id = ? ORDER BY week_number ASC", [$assignment_id]);
+    $reports_status['weekly'] = $weekly ?: [];
+
     // Final Report
-    $final = fetchOne(
-        "SELECT * FROM final_reports WHERE assignment_id = ?",
-        [$current_assignment['assignment_id']]
-    );
-    $reports_status['final'] = $final;
-    
+    $final = fetchOne("SELECT * FROM final_reports WHERE assignment_id = ?", [$assignment_id]);
+    $reports_status['final'] = $final ?: null;
+
     // Company Evaluation
-    $company_eval = fetchOne(
-        "SELECT * FROM company_evaluations WHERE assignment_id = ?",
-        [$current_assignment['assignment_id']]
-    );
-    $reports_status['company_eval'] = $company_eval;
-    
-    // Get total marks
-    $total_marks = fetchOne(
-        "SELECT * FROM student_total_marks WHERE assignment_id = ?",
-        [$current_assignment['assignment_id']]
-    );
+    $company_eval = fetchOne("SELECT * FROM company_evaluations WHERE assignment_id = ?", [$assignment_id]);
+    $reports_status['company_eval'] = $company_eval ?: null;
+
+    // Total marks
+    $marks = fetchOne("SELECT * FROM student_total_marks WHERE assignment_id = ?", [$assignment_id]);
+    $total_marks = $marks ?: null;
 }
 
 include '../includes/header.php';
@@ -79,9 +69,7 @@ include '../includes/header.php';
             <div class="stat-label">Training Assignment</div>
         </div>
         <div class="stat-card <?php echo $reports_status['stage1'] ? 'success' : 'warning'; ?>">
-            <div class="stat-value">
-                <?php echo $reports_status['stage1'] ? '✓' : '—'; ?>
-            </div>
+            <div class="stat-value"><?php echo $reports_status['stage1'] ? '✓' : '—'; ?></div>
             <div class="stat-label">Stage 1 Report</div>
         </div>
         <div class="stat-card">
@@ -89,9 +77,7 @@ include '../includes/header.php';
             <div class="stat-label">Weekly Follow-ups</div>
         </div>
         <div class="stat-card <?php echo $reports_status['final'] ? 'success' : 'warning'; ?>">
-            <div class="stat-value">
-                <?php echo $reports_status['final'] ? '✓' : '—'; ?>
-            </div>
+            <div class="stat-value"><?php echo $reports_status['final'] ? '✓' : '—'; ?></div>
             <div class="stat-label">Final Report</div>
         </div>
     </div>
@@ -102,27 +88,27 @@ include '../includes/header.php';
         <div class="card-header">
             <h2>Current Training Assignment</h2>
             <span class="badge badge-<?php 
-                echo $current_assignment['status'] === 'completed' ? 'success' : 
-                    ($current_assignment['status'] === 'in_progress' ? 'info' : 'pending'); 
+                echo ($current_assignment['status'] ?? '') === 'completed' ? 'success' : 
+                    (($current_assignment['status'] ?? '') === 'in_progress' ? 'info' : 'pending'); 
             ?>">
-                <?php echo ucfirst(str_replace('_', ' ', $current_assignment['status'])); ?>
+                <?php echo ucfirst(str_replace('_', ' ', $current_assignment['status'] ?? 'Pending')); ?>
             </span>
         </div>
         <div class="card-body">
             <div class="form-row">
                 <div class="form-group">
                     <label><strong>Company:</strong></label>
-                    <p><?php echo htmlspecialchars($current_assignment['company_name']); ?></p>
+                    <p><?php echo htmlspecialchars($current_assignment['company_name'] ?? '—'); ?></p>
                 </div>
                 <div class="form-group">
                     <label><strong>Academic Supervisor:</strong></label>
-                    <p><?php echo htmlspecialchars($current_assignment['supervisor_name']); ?></p>
+                    <p><?php echo htmlspecialchars($current_assignment['supervisor_name'] ?? '—'); ?></p>
                 </div>
                 <div class="form-group">
                     <label><strong>Training Start Date:</strong></label>
-                    <p><?php echo formatDate($current_assignment['training_start_date']); ?></p>
+                    <p><?php echo isset($current_assignment['training_start_date']) ? formatDate($current_assignment['training_start_date']) : '—'; ?></p>
                 </div>
-                <?php if ($current_assignment['training_end_date']): ?>
+                <?php if (!empty($current_assignment['training_end_date'])): ?>
                 <div class="form-group">
                     <label><strong>Training End Date:</strong></label>
                     <p><?php echo formatDate($current_assignment['training_end_date']); ?></p>
@@ -148,35 +134,32 @@ include '../includes/header.php';
                         </tr>
                     </thead>
                     <tbody>
+                        <!-- Stage 1 Report -->
                         <tr>
                             <td>Stage 1 Report (Company Profile)</td>
                             <td>
                                 <?php if ($reports_status['stage1']): ?>
-                                    <span class="badge badge-<?php echo $reports_status['stage1']['status'] === 'graded' ? 'success' : 'info'; ?>">
-                                        <?php echo ucfirst($reports_status['stage1']['status']); ?>
+                                    <span class="badge badge-<?php echo ($reports_status['stage1']['status'] ?? '') === 'graded' ? 'success' : 'info'; ?>">
+                                        <?php echo ucfirst($reports_status['stage1']['status'] ?? 'Not Submitted'); ?>
                                     </span>
                                 <?php else: ?>
                                     <span class="badge badge-warning">Not Submitted</span>
                                 <?php endif; ?>
                             </td>
-                            <td>
-                                <?php echo $reports_status['stage1'] ? formatDate($reports_status['stage1']['submitted_at']) : '—'; ?>
-                            </td>
+                            <td><?php echo isset($reports_status['stage1']['submitted_at']) ? formatDate($reports_status['stage1']['submitted_at']) : '—'; ?></td>
                             <td>
                                 <a href="stage1_form.php" class="btn btn-sm btn-primary"><?php echo $reports_status['stage1'] ? 'Edit' : 'Submit'; ?></a>
                             </td>
                         </tr>
+
+                        <!-- Weekly Follow-ups -->
                         <tr>
                             <td>Weekly Follow-ups</td>
-                            <td>
-                                <span class="badge badge-info">
-                                    <?php echo count($reports_status['weekly']); ?> submitted
-                                </span>
-                            </td>
+                            <td><span class="badge badge-info"><?php echo count($reports_status['weekly']); ?> submitted</span></td>
                             <td>
                                 <?php 
                                 if (!empty($reports_status['weekly'])) {
-                                    echo formatDate(end($reports_status['weekly'])['submitted_at']);
+                                    echo formatDate(end($reports_status['weekly'])['submitted_at'] ?? '—');
                                 } else {
                                     echo '—';
                                 }
@@ -187,20 +170,20 @@ include '../includes/header.php';
                                 <a href="weekly_list.php" class="btn btn-sm btn-secondary">View All</a>
                             </td>
                         </tr>
+
+                        <!-- Final Report -->
                         <tr>
                             <td>Final Report</td>
                             <td>
                                 <?php if ($reports_status['final']): ?>
-                                    <span class="badge badge-<?php echo $reports_status['final']['status'] === 'graded' ? 'success' : 'info'; ?>">
-                                        <?php echo ucfirst($reports_status['final']['status']); ?>
+                                    <span class="badge badge-<?php echo ($reports_status['final']['status'] ?? '') === 'graded' ? 'success' : 'info'; ?>">
+                                        <?php echo ucfirst($reports_status['final']['status'] ?? 'Not Submitted'); ?>
                                     </span>
                                 <?php else: ?>
                                     <span class="badge badge-warning">Not Submitted</span>
                                 <?php endif; ?>
                             </td>
-                            <td>
-                                <?php echo $reports_status['final'] ? formatDate($reports_status['final']['submitted_at']) : '—'; ?>
-                            </td>
+                            <td><?php echo isset($reports_status['final']['submitted_at']) ? formatDate($reports_status['final']['submitted_at']) : '—'; ?></td>
                             <td>
                                 <a href="final_report.php" class="btn btn-sm btn-primary"><?php echo $reports_status['final'] ? 'Edit' : 'Submit'; ?></a>
                             </td>
@@ -211,36 +194,35 @@ include '../includes/header.php';
         </div>
     </div>
 
-    <?php if (isset($total_marks) && $total_marks['total_mark'] > 0): ?>
+    <!-- Total Marks -->
+    <?php if ($total_marks && ($total_marks['total_mark'] ?? 0) > 0): ?>
     <div class="card">
-        <div class="card-header">
-            <h2>Total Marks</h2>
-        </div>
+        <div class="card-header"><h2>Total Marks</h2></div>
         <div class="card-body">
             <div class="form-row">
                 <div class="form-group">
                     <label>Stage 1 Report:</label>
-                    <p><strong><?php echo number_format($total_marks['stage1_mark'], 2); ?>/5</strong></p>
+                    <p><strong><?php echo number_format($total_marks['stage1_mark'] ?? 0, 2); ?>/5</strong></p>
                 </div>
                 <div class="form-group">
                     <label>Weekly Follow-ups:</label>
-                    <p><strong><?php echo number_format($total_marks['weekly_followups_mark'], 2); ?></strong></p>
+                    <p><strong><?php echo number_format($total_marks['weekly_followups_mark'] ?? 0, 2); ?></strong></p>
                 </div>
                 <div class="form-group">
                     <label>Final Report:</label>
-                    <p><strong><?php echo number_format($total_marks['final_report_mark'], 2); ?>/20</strong></p>
+                    <p><strong><?php echo number_format($total_marks['final_report_mark'] ?? 0, 2); ?>/20</strong></p>
                 </div>
                 <div class="form-group">
                     <label>Total Mark:</label>
                     <p><strong style="font-size: 24px; color: var(--primary-color);">
-                        <?php echo number_format($total_marks['total_mark'], 2); ?>
+                        <?php echo number_format($total_marks['total_mark'] ?? 0, 2); ?>
                     </strong></p>
                 </div>
-                <?php if ($total_marks['final_grade']): ?>
+                <?php if (!empty($total_marks['final_grade'])): ?>
                 <div class="form-group">
                     <label>Final Grade:</label>
                     <p><strong style="font-size: 24px; color: var(--primary-color);">
-                        <?php echo $total_marks['final_grade']; ?>
+                        <?php echo htmlspecialchars($total_marks['final_grade']); ?>
                     </strong></p>
                 </div>
                 <?php endif; ?>
@@ -260,5 +242,3 @@ include '../includes/header.php';
 <?php endif; ?>
 
 <?php include '../includes/footer.php'; ?>
-
-
