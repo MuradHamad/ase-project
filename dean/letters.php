@@ -61,6 +61,52 @@ $assignments = fetchAll($assign_sql);
 $selected_assignment = isset($_GET['assignment_id']) ? intval($_GET['assignment_id']) : 0;
 
 include '../includes/header.php';
+
+// If a specific letter is requested, show read-only view
+if (isset($_GET['letter_id']) && intval($_GET['letter_id']) > 0) {
+    $letter_id = intval($_GET['letter_id']);
+    $letter_sql = "SELECT l.*, u.full_name AS student_name, s.student_number, issued_by_user.full_name AS issued_by_name, ta.assignment_id
+                   FROM training_request_letters l
+                   JOIN training_assignments ta ON l.assignment_id = ta.assignment_id
+                   JOIN users u ON ta.student_id = u.user_id
+                   JOIN students s ON ta.student_id = s.student_id
+                   LEFT JOIN users issued_by_user ON l.issued_by = issued_by_user.user_id
+                   WHERE l.letter_id = ? LIMIT 1";
+    $letter = fetchOne($letter_sql, [$letter_id]);
+
+    ?>
+    <div class="container">
+        <?php if ($letter === false): ?>
+            <div class="card">
+                <div class="card-body">
+                    <p>Letter not found.</p>
+                    <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
+                </div>
+            </div>
+        <?php else: ?>
+            <div class="card">
+                <div class="card-header">
+                    <h3>View Letter #<?php echo htmlspecialchars($letter['letter_id']); ?></h3>
+                </div>
+                <div class="card-body">
+                    <p><strong>Student:</strong> <?php echo htmlspecialchars($letter['student_name'] ?? '—'); ?> (<?php echo htmlspecialchars($letter['student_number'] ?? '—'); ?>)</p>
+                    <p><strong>Issued By:</strong> <?php echo htmlspecialchars($letter['issued_by_name'] ?? '—'); ?></p>
+                    <p><strong>Issue Date:</strong> <?php echo formatDate($letter['issued_date']); ?></p>
+                    <hr>
+                    <div style="white-space: pre-wrap; border:1px solid #eaeaea; padding:12px; background:#fff;">
+                        <?php echo nl2br(htmlspecialchars($letter['letter_content'])); ?>
+                    </div>
+                    <div style="margin-top:15px;">
+                        <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <?php include '../includes/footer.php';
+    exit();
+}
 ?>
 
 <div class="container">
@@ -103,47 +149,7 @@ include '../includes/header.php';
         </div>
     </div>
 
-    <h3 style="margin-top: 30px;">Issued Letters</h3>
-    <?php if ($letters === false || empty($letters)): ?>
-        <div class="card">
-            <div class="card-body">
-                <p>No letters issued yet.</p>
-            </div>
-        </div>
-    <?php else: ?>
-        <div class="card">
-            <div class="card-body">
-                <div class="table-container">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Letter ID</th>
-                                <th>Student Name</th>
-                                <th>Student ID</th>
-                                <th>Issued By</th>
-                                <th>Issue Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($letters as $l): ?>
-                                <tr>
-                                    <td><?php echo $l['letter_id']; ?></td>
-                                    <td><?php echo htmlspecialchars($l['student_name'] ?? '—'); ?></td>
-                                    <td><?php echo htmlspecialchars($l['student_number'] ?? '—'); ?></td>
-                                    <td><?php echo htmlspecialchars($l['issued_by_name'] ?? '—'); ?></td>
-                                    <td><?php echo formatDate($l['issued_date']); ?></td>
-                                    <td>
-                                        <button type="button" class="btn btn-sm" onclick="showLetter(<?php echo $l['letter_id']; ?>, '<?php echo addslashes(htmlspecialchars($l['letter_content'])); ?>')">View Letter</button>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    <?php endif; ?>
+    <!-- Previously issued letters list removed as requested -->
 </div>
 
 <script>

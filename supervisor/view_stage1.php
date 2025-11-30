@@ -46,10 +46,10 @@ if (!$report) {
 
 // Determine company supervisor signature status
 $company_signed_text = 'Pending Review';
-if (isset($report['company_supervisor_signed'])) {
-    if ($report['company_supervisor_signed'] == 1) {
+if (isset($report['company_supervisor_signature'])) {
+    if ($report['company_supervisor_signature'] == 1) {
         $company_signed_text = 'Approved';
-    } elseif ($report['company_supervisor_signed'] == 0) {
+    } elseif ($report['company_supervisor_signature'] == 0) {
         $company_signed_text = 'Not Signed';
     }
 }

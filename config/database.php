@@ -9,7 +9,8 @@
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
-define('DB_NAME', 'field_training_db');
+// Database name used by the current application (updated to the new DB)
+define('DB_NAME', 'field_training');
 define('DB_CHARSET', 'utf8mb4');
 
 /**

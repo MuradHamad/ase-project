@@ -127,7 +127,7 @@ CREATE TABLE `company_supervisors` (
 INSERT INTO `company_supervisors` (`supervisor_id`, `company_id`, `user_id`, `full_name`, `email`, `phone`, `is_primary`) VALUES
 (1, 1, NULL, 'Ahmad Al-Karim', 'ahmad.karim@orange.jo', '+962 79 1111111', 1),
 (2, 2, NULL, 'Samira Al-Rahman', 'samira.rahman@zain.com.jo', '+962 79 2222222', 1),
-(3, 3, NULL, 'Tariq Al-Salem', 'tariq.salem@umniah.com.jo', '+962 79 3333333', 1),
+(3, 3, 12, 'Tariq Al-Salem', 'tariq.salem@umniah.com.jo', '+962 79 3333333', 1),
 (4, 4, NULL, 'Noura Al-Ali', 'noura.ali@aseza.jo', '+962 79 4444444', 1),
 (5, 5, NULL, 'Rami Al-Mansour', 'rami.mansour@microsoft.com', '+962 79 5555555', 1);
 
@@ -435,7 +435,8 @@ INSERT INTO `users` (`user_id`, `username`, `password`, `email`, `full_name`, `p
 (8, 'student003', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'student003@uop.edu.jo', 'Yusuf Al-Hassan', '+962 79 3456789', 'student', 1, '2025-11-29 13:20:03'),
 (9, 'student004', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'student004@uop.edu.jo', 'Mariam Al-Ibrahim', '+962 79 4567890', 'student', 1, '2025-11-29 13:20:03'),
 (10, 'student005', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'student005@uop.edu.jo', 'Hassan Al-Nasser', '+962 79 5678901', 'student', 1, '2025-11-29 13:20:03'),
-(11, 'std', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'newstudent01@example.com', 'John Doe', '+962 7 1234 5678', 'student', 1, '2025-11-29 15:15:28');
+(11, 'std', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'newstudent01@example.com', 'John Doe', '+962 7 1234 5678', 'student', 1, '2025-11-29 15:15:28'),
+
 
 -- --------------------------------------------------------
 
