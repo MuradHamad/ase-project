@@ -13,33 +13,8 @@ if (session_status() === PHP_SESSION_NONE) {
 // Timezone
 date_default_timezone_set('Asia/Amman');
 
-// Base URL (auto-detect from request host and script dir)
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-
-// Determine project path relative to the webserver document root so BASE_URL
-// always points to the project root (not the current script directory).
-$docRoot = isset($_SERVER['DOCUMENT_ROOT']) ? realpath($_SERVER['DOCUMENT_ROOT']) : false;
-$projectRoot = realpath(__DIR__ . '/..');
-$basePath = '';
-if ($docRoot && $projectRoot && strpos($projectRoot, $docRoot) === 0) {
-    $basePath = substr($projectRoot, strlen($docRoot));
-    $basePath = str_replace('\\', '/', $basePath);
-}
-
-// Encode each path segment to safely handle spaces and special chars
-$encodedDir = '';
-if ($basePath && $basePath !== '/' && $basePath !== '.') {
-    $parts = array_filter(explode('/', trim($basePath, '/')));
-    $encodedParts = array_map('rawurlencode', $parts);
-    $encodedDir = '/' . implode('/', $encodedParts);
-}
-
-$base = $protocol . '://' . $host . $encodedDir;
-define('BASE_URL', rtrim($base, '/'));
-
-// Assets URL (use for linking CSS/JS/images)
-define('ASSETS_URL', BASE_URL . '/assets');
+// Base URL (adjust if needed)
+define('BASE_URL', 'http://localhost/ase%20project');
 
 // Site Configuration
 define('SITE_NAME', 'Field Training Management System');

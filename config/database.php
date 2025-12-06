@@ -9,7 +9,6 @@
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
-// Database name used by the current application (updated to the new DB)
 define('DB_NAME', 'field_training');
 define('DB_CHARSET', 'utf8mb4');
 
@@ -22,10 +21,22 @@ function getDBConnection() {
     
     if ($conn === null) {
         try {
-            $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+            // First try to connect without selecting database
+            $conn = @new mysqli(DB_HOST, DB_USER, DB_PASS);
             
             if ($conn->connect_error) {
-                throw new Exception("Connection failed: " . $conn->connect_error);
+                throw new Exception("MySQL Connection failed: " . $conn->connect_error . ". Please make sure XAMPP MySQL is running.");
+            }
+            
+            // Check if database exists
+            $db_check = $conn->query("SHOW DATABASES LIKE '" . DB_NAME . "'");
+            if ($db_check->num_rows == 0) {
+                throw new Exception("Database '" . DB_NAME . "' does not exist. Please run setup_check.php to create it.");
+            }
+            
+            // Select the database
+            if (!$conn->select_db(DB_NAME)) {
+                throw new Exception("Failed to select database '" . DB_NAME . "': " . $conn->error);
             }
             
             // Set charset
@@ -33,7 +44,11 @@ function getDBConnection() {
             
         } catch (Exception $e) {
             error_log("Database connection error: " . $e->getMessage());
-            die("Database connection failed. Please try again later.");
+            die("<div style='padding:20px;background:#fee;border:1px solid #c00;color:#c00;margin:20px;border-radius:5px'>" .
+                "<h3>Database Connection Error</h3>" .
+                "<p>" . htmlspecialchars($e->getMessage()) . "</p>" .
+                "<p><a href='" . (defined('BASE_URL') ? BASE_URL : '') . "/setup_check.php'>Run Database Setup Check</a></p>" .
+                "</div>");
         }
     }
     

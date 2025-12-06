@@ -94,7 +94,7 @@ if ($flash) {
             </form>
             
             <div class="login-footer">
-                <p>Default test password: <strong>password123</strong></p>
+                <p>Default test password: <strong>password</strong></p>
             </div>
         </div>
     </div>

@@ -15,15 +15,13 @@ require_once __DIR__ . '/../config/config.php';
 function loginUser($username, $password) {
     $conn = getDBConnection();
     
-        // Get user by username
-        $sql = "SELECT u.*, 
+    // Get user by username
+    $sql = "SELECT u.*, 
             s.student_id, s.student_number, s.major,
-            ac.supervisor_id as academic_supervisor_id, ac.employee_number, ac.department,
-            cs.supervisor_id as company_supervisor_id, cs.company_id as company_id
+            ac.supervisor_id as academic_supervisor_id, ac.employee_number, ac.department
             FROM users u
             LEFT JOIN students s ON u.user_id = s.student_id
             LEFT JOIN academic_supervisors ac ON u.user_id = ac.supervisor_id
-            LEFT JOIN company_supervisors cs ON u.user_id = cs.user_id
             WHERE u.username = ? AND u.is_active = 1";
     
     $user = fetchOne($sql, [$username]);
@@ -53,14 +51,6 @@ function loginUser($username, $password) {
         $_SESSION['supervisor_id'] = $user['academic_supervisor_id'];
         $_SESSION['employee_number'] = $user['employee_number'];
         $_SESSION['department'] = $user['department'];
-    }
-
-    // Company supervisors (users linked to company_supervisors table)
-    if (!empty($user['company_supervisor_id']) || $user['user_type'] === 'company_supervisor') {
-        $_SESSION['company_supervisor_id'] = $user['company_supervisor_id'];
-        $_SESSION['company_id'] = $user['company_id'];
-        // ensure user_type reflects company supervisor so authorization checks work
-        $_SESSION['user_type'] = 'company_supervisor';
     }
     
     return ['success' => true, 'message' => 'Login successful'];
@@ -141,8 +131,6 @@ function getDashboardURL() {
             return BASE_URL . '/student/dashboard.php';
         case 'supervisor':
             return BASE_URL . '/supervisor/dashboard.php';
-        case 'company_supervisor':
-            return BASE_URL . '/company_supervisor/dashboard.php';
         case 'coordinator':
             return BASE_URL . '/coordinator/dashboard.php';
         case 'dean':

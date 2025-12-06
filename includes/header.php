@@ -17,10 +17,10 @@ $current_user_type = getCurrentUserType();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo isset($page_title) ? $page_title . ' - ' : ''; ?><?php echo SITE_NAME; ?></title>
-    <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/style.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/style.css">
     <?php if (isset($additional_css)): ?>
         <?php foreach ($additional_css as $css): ?>
-            <link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/<?php echo $css; ?>">
+            <link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/<?php echo $css; ?>">
         <?php endforeach; ?>
     <?php endif; ?>
 </head>
@@ -40,8 +40,6 @@ $current_user_type = getCurrentUserType();
                     </li>
                     <?php if ($current_user_type === 'student'): ?>
                         <li><a href="<?php echo BASE_URL; ?>/student/companies.php">Companies</a></li>
-                    <?php elseif ($current_user_type === 'company_supervisor'): ?>
-                        <li><a href="<?php echo BASE_URL; ?>/company_supervisor/dashboard.php">My Trainees</a></li>
                     <?php elseif ($current_user_type === 'supervisor'): ?>
                         <li><a href="<?php echo BASE_URL; ?>/supervisor/students.php">My Students</a></li>
                         <li><a href="<?php echo BASE_URL; ?>/supervisor/grading.php">Grading</a></li>

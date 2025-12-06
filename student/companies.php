@@ -34,33 +34,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['select_company']) && 
     
     // Get a random supervisor (in real system, this would be assigned by coordinator)
     $supervisors = fetchAll("SELECT supervisor_id FROM academic_supervisors LIMIT 1");
-    if (!empty($supervisors)) {
+    
+    if (empty($supervisors)) {
+        setFlashMessage('No academic supervisors available. Please contact the coordinator.', 'error');
+    } else {
         $supervisor_id = $supervisors[0]['supervisor_id'];
         
         // Get current semester dates (simplified - adjust as needed)
         $start_date = date('Y-m-d');
-        $end_date = date('Y-m-d', strtotime('+20 days'));
+        $end_date = date('Y-m-d', strtotime('+' . TRAINING_DAYS . ' days'));
+        
+        // Debug logging
+        error_log("=== Company Selection Debug ===");
+        error_log("Student ID: " . $student_id);
+        error_log("Company ID: " . $company_id);
+        error_log("Supervisor ID: " . $supervisor_id);
+        error_log("Start Date: " . $start_date);
+        error_log("End Date: " . $end_date);
+        error_log("Training Hours: " . TRAINING_HOURS);
         
         $sql = "INSERT INTO training_assignments 
                 (student_id, company_id, academic_supervisor_id, training_start_date, 
                  training_end_date, status, total_hours, training_type)
                 VALUES (?, ?, ?, ?, ?, 'assigned', ?, 'company')";
         
-        $result = executeUpdate($sql, [
-            $student_id,
-            $company_id,
-            $supervisor_id,
-            $start_date,
-            $end_date,
-            TRAINING_HOURS
-        ]);
-        
-        if ($result !== false) {
-            setFlashMessage('Company selected successfully! You can now submit your reports.', 'success');
-            header('Location: dashboard.php');
-            exit();
-        } else {
-            setFlashMessage('Error selecting company. Please try again.', 'error');
+        try {
+            error_log("About to execute INSERT query");
+            $result = executeUpdate($sql, [
+                $student_id,
+                $company_id,
+                $supervisor_id,
+                $start_date,
+                $end_date,
+                TRAINING_HOURS
+            ]);
+            
+            error_log("Execute result: " . var_export($result, true));
+            
+            if ($result !== false && $result > 0) {
+                setFlashMessage('Company selected successfully! You can now submit your reports.', 'success');
+                header('Location: dashboard.php');
+                exit();
+            } else {
+                // Get the actual database error
+                $conn = getDBConnection();
+                $error = $conn->error;
+                error_log("Company selection failed. DB Error: " . $error);
+                error_log("Result was: " . var_export($result, true));
+                setFlashMessage('Error selecting company: ' . ($error ? $error : 'Unknown error. Check error logs.'), 'error');
+            }
+        } catch (Exception $e) {
+            error_log("Company selection exception: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            setFlashMessage('An error occurred: ' . $e->getMessage(), 'error');
         }
     }
 }

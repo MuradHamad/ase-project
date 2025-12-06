@@ -36,11 +36,10 @@ if (!$assignment) {
 
 // Get existing weekly follow-ups to calculate week number
 $existing_followups = fetchAll(
-    "SELECT * FROM weekly_followups WHERE assignment_id = ? ORDER BY week_number DESC LIMIT 1",
+    "SELECT week_number FROM weekly_followups WHERE assignment_id = ? ORDER BY week_number DESC LIMIT 1",
     [$assignment['assignment_id']]
 );
 
-// Determine next week number
 $next_week = !empty($existing_followups) ? ($existing_followups[0]['week_number'] + 1) : 1;
 $max_weeks = WEEKS_IN_TRAINING;
 
@@ -50,7 +49,7 @@ if ($next_week > $max_weeks) {
     exit();
 }
 
-// Calculate week start and end dates
+// Calculate week dates
 $start_date = new DateTime($assignment['training_start_date']);
 $start_date->modify('+' . (($next_week - 1) * 7) . ' days');
 $end_date = clone $start_date;
@@ -58,9 +57,6 @@ $end_date->modify('+6 days');
 
 $error = '';
 $tasks = [['tasks_duties' => '', 'notes' => '', 'gained_skills' => '']];
-
-// Get latest supervisor signature (if exists)
-$latest_followup = !empty($existing_followups) ? $existing_followups[0] : null;
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_weekly'])) {
@@ -84,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_weekly'])) {
     if (empty($tasks_data)) {
         $error = 'Please add at least one task';
     } else {
+        // Prepare variables for bind_param
         $company_signed = isset($_POST['company_supervisor_signed']) ? 1 : 0;
         $company_signed_date = !empty($_POST['company_supervisor_signed_date']) ? $_POST['company_supervisor_signed_date'] : null;
         $academic_signed = isset($_POST['academic_supervisor_signed']) ? 1 : 0;
@@ -160,7 +157,7 @@ include '../includes/header.php';
     
     <form method="POST" action="" data-validate>
         <div class="card-body">
-            <!-- Student Information -->
+            <!-- Student and Company Information -->
             <h3>Student Information</h3>
             <div class="form-row">
                 <div class="form-group">
@@ -173,7 +170,7 @@ include '../includes/header.php';
                 </div>
             </div>
 
-            <!-- Week Dates -->
+            <!-- Week Information -->
             <div class="form-row">
                 <div class="form-group">
                     <label for="week_start_date">Week From: <span style="color: red;">*</span></label>
@@ -189,6 +186,10 @@ include '../includes/header.php';
 
             <!-- Tasks Table -->
             <h3 style="margin-top: 30px;">Tasks and Duties</h3>
+            <div class="help-text mb-2">
+                The evaluation is considered as weekly evaluation, therefore the week that the student does not follow with the academic supervisor, two marks will be deducted from the weekly follow up total marks.
+            </div>
+            
             <div class="table-container">
                 <table id="tasks-table">
                     <thead>
@@ -228,33 +229,6 @@ include '../includes/header.php';
             
             <button type="button" class="btn btn-sm btn-secondary mt-2" 
                     onclick="addTaskRow()">Add Another Task</button>
-
-            <!-- Company Supervisor Approval (Read-only) -->
-            <h3 style="margin-top: 30px;">Company Supervisor Approval</h3>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Status:</label>
-                    <input type="text" value="<?php
-                        if ($latest_followup) {
-                            if ($latest_followup['company_supervisor_signed'] === null) {
-                                echo 'Pending Review';
-                            } elseif ($latest_followup['company_supervisor_signed'] == 0) {
-                                echo 'Not Signed';
-                            } else {
-                                echo 'Approved';
-                            }
-                        } else {
-                            echo 'Pending Review';
-                        }
-                    ?>" disabled>
-                </div>
-                <?php if ($latest_followup && !empty($latest_followup['company_supervisor_signed_date'])): ?>
-                <div class="form-group">
-                    <label>Signed On:</label>
-                    <input type="text" value="<?php echo formatDate($latest_followup['company_supervisor_signed_date']); ?>" disabled>
-                </div>
-                <?php endif; ?>
-            </div>
         </div>
         
         <div class="card-footer">
